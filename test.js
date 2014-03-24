@@ -93,9 +93,6 @@ describe("merging", function () {
     hist.checkout("master")
     c = hist.merge("huh")
 
-    console.log(c)
-    console.log("--------")
-    console.log(c.parents)
-    //assert.deepEqual(c.parents, [a, b])
+    assert.deepEqual(c.parents, [b, a])
   })
 })
