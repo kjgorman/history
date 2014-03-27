@@ -10,12 +10,12 @@ describe("commits", function () {
     assert.notEqual(a.id, b.id)
   })
 
-  it("should generate unique hashes", function () {
+  it("should be a monotonically increasing sequence", function () {
     var hist = new History()
       , a = hist.commit()
       , b = hist.commit()
 
-    assert.notEqual(a.hash, b.hash)
+    assert.equal(true, a.id < b.id)
   })
 
   it("should set the parent", function () {
@@ -63,7 +63,7 @@ describe("branching", function () {
     hist.commit()
 
     hist.checkout ("yea", true)
-    c = hist.commit()
+    var c = hist.commit()
     assert.equal(c, hist.HEAD)
     hist.checkout ("master")
     assert.notEqual(c, hist.HEAD)
@@ -76,9 +76,9 @@ describe("merging", function () {
       , a = hist.commit()
       , b, c
     hist.checkout("huh", true)
-    b = hist.commit()
+    var b = hist.commit()
     hist.checkout("master")
-    c = hist.merge("huh")
+    var c = hist.merge("huh")
 
     assert.notEqual(b, hist.HEAD)
     assert.equal(c, hist.HEAD)
@@ -89,10 +89,46 @@ describe("merging", function () {
       , a = hist.commit()
       , b, c
     hist.checkout("huh", true)
-    b = hist.commit()
+    var b = hist.commit()
     hist.checkout("master")
-    c = hist.merge("huh")
+    var c = hist.merge("huh")
 
     assert.deepEqual(c.parents, [b, a])
   })
+})
+
+describe("log", function () {
+  it("should describe a monotonic sequence for a linear history", function () {
+    var hist = new History()
+      , a = hist.commit()
+      , b = hist.commit()
+      , l = hist.log()
+
+    assert.deepEqual([b.id, a.id], l)
+  })
+
+  it("should describe a monotonic sequence for branched history", function () {
+    var hist = new History()
+      , a = hist.commit()
+    hist.checkout("huh", true)
+    var b = hist.commit()
+    hist.checkout("foo", true)
+    var c = hist.commit()
+    hist.checkout("master")
+    var d = hist.commit()
+      , e = hist.merge("foo")
+      , l = hist.log()
+
+    /*      22
+          /  \
+        /     \
+       20      \
+        \       \
+        19     21
+          \   /
+           18
+    */
+    assert.deepEqual([e.id, d.id, c.id, b.id, a.id], l)
+  })
+
 })

@@ -1,9 +1,7 @@
 /*jshint asi:true, expr:true*/
 -function () {
   "use strict";
-  var crypto = require('crypto')
-
-  var idGenerator = genId()
+   var idGenerator = genId()
 
   function History () {
     this.currentBranch = new Branch("master")
@@ -46,6 +44,24 @@
     return c
   }
 
+  History.prototype.log = function () {
+    var log = []
+      , fringe = [this.HEAD]
+      , next
+
+    while (fringe.length > 0) {
+      fringe = fringe.sort(function (a, b) {
+        return a.id < b.id
+      })
+      next = fringe.shift()
+
+      fringe = and(fringe,parents(next))
+      log.push(next.id)
+    }
+
+    return log
+  }
+
   function Branch (name) {
     this.name = name
     this.ref = null
@@ -58,7 +74,6 @@
 
   function Commit () {
     this.id = idGenerator()
-    this.hash = genStamp()
     this.parents = []
   }
 
@@ -70,15 +85,6 @@
     }
   }
 
-  function genStamp () {
-    var time = new Date().getTime()
-      , and  = Math.random()
-
-    return crypto.createHash("sha256")
-                 .update(time+"-"+and)
-                 .digest("base64")
-  }
-
   function first (fn) {
     var next
     for (var i = 0, length = this.branch().length; i < length; i++) {
@@ -88,6 +94,20 @@
       }
     }
     return null
+  }
+
+  function parents (f) {
+    return f.parents.filter(function id (x) { return x })
+  }
+
+  function flatMap (m, f) {
+    return [].concat.apply([], m.map(f))
+  }
+
+  function and (a, b) {
+    return a.concat(b.filter(function (el) {
+      return a.indexOf(el) === -1
+    }))
   }
 
   module.exports = History
